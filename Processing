@@ -1,0 +1,104 @@
+
+import controlP5.*;
+import processing.serial.*;
+
+ControlP5 cp5;
+Serial myPort;
+DropdownList dropdown1, dropdown2, dropdownTransition1, dropdownTransition2, dropdown3;
+Textfield t1, t2, t3;
+Button start;
+PFont font;
+
+
+void setup() { //create the interface background
+  size(1200, 1000);
+  cp5 = new ControlP5(this); 
+  font = createFont("arial", 11);
+  cp5.setFont(font);
+  
+  String[] states = {"No Action", "1.varied slow speed", "2. varied fast speed", "3. constant slow speed with pause", "4. constant fast speed with pause", "5. varied slow speed with pause", "6. varied fast speed with pause", "7. constant slow speed", "8. constant fast speed"};
+
+  dropdown1 = cp5.addDropdownList(" Choose your State 1 ").setPosition(170,50).setSize(360,500).setItemHeight(18);
+  for (int i = 0; i < states.length; i++) {
+    dropdown1.addItem(states[i], i);
+  }
+
+  t1 = cp5.addTextfield("    ")
+         .setPosition(580,65)
+         .setSize(190,35);
+         
+  dropdownTransition1 = cp5.addDropdownList("Transition 1")
+                           .setPosition(170,245)
+                           .setSize(360,500)
+                           .setItemHeight(18)
+                           .setHeight(120);
+                      
+  dropdownTransition1.setColorBackground(color(77, 111, 191));        //Transition                 
+  dropdownTransition1.addItem("No Action", 0);
+  dropdownTransition1.addItem("1. Gradual", 1);
+  dropdownTransition1.addItem("2. Sudden", 2);
+  dropdownTransition1.addItem("3. Random", 3);
+
+  dropdown2 = cp5.addDropdownList(" Choose your State 2 ").setPosition(170,350).setSize(360,500).setItemHeight(18);
+  for (int i = 0; i < states.length; i++) {
+    dropdown2.addItem(states[i], i);
+  }
+
+  t2 = cp5.addTextfield("   ")
+         .setPosition(580,365)
+         .setSize(190,35);
+  
+  dropdownTransition2 = cp5.addDropdownList("Transition 2")
+                           .setPosition(170,545)
+                           .setSize(360,500)
+                           .setItemHeight(18);
+                          
+  
+  dropdownTransition2.setColorBackground(color(77, 111, 191));                        
+  dropdownTransition2.addItem("No Action", 0);
+  dropdownTransition2.addItem("1. Gradual", 1);
+  dropdownTransition2.addItem("2. Sudden", 2);
+  dropdownTransition2.addItem("3. Random", 3);
+
+  dropdown3 = cp5.addDropdownList(" Choose your State 3 ").setPosition(170,650).setSize(360,500).setItemHeight(18);
+  for (int i = 0; i < states.length; i++) {
+    dropdown3.addItem(states[i], i);
+  }
+
+  t3 = cp5.addTextfield(" ")
+         .setPosition(580,665)
+         .setSize(190, 35);
+
+  start = cp5.addButton("Click to Start")
+              .setPosition(900,360)
+              .setSize(150,60);
+
+  println(Serial.list());
+  myPort = new Serial(this, "/dev/cu.usbmodem11301", 9600);
+}
+
+void draw() {
+  background(0);
+  fill(255);
+  textSize(14); 
+  text("Input duration for State 1  in seconds", 580, 60);
+  text("Input duration for State 2  in seconds", 580, 360);
+  text("Input duration for State 3  in seconds", 580, 660);
+  textSize(19);
+  text("State 1", 40, 60);
+  text("State 2", 40, 360);
+  text("State 3", 40, 665);
+  textSize(17);
+  text("Transition between", 20, 250);
+  text("State 1 and State 2 ", 20, 265);
+  text("Transition between", 20, 550);
+  text("State 2 and State 3 ", 20, 565);
+}
+
+void controlEvent(ControlEvent theEvent) {
+  if (theEvent.isFrom("Click to Start")) {
+    String command = str((int)dropdown1.getValue()) + " " + t1.getText() + " " + str((int)dropdownTransition1.getValue()) + " " + str((int)dropdown2.getValue()) + " " + t2.getText() + " " + str((int)dropdownTransition2.getValue()) + " " + str((int)dropdown3.getValue()) + " " + t3.getText();
+    println(command);
+    myPort.write(command);
+  }
+}
