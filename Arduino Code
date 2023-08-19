@@ -1,0 +1,326 @@
+#include <Servo.h>  //Arduino code
+
+const int servoPin = 13;
+Servo servo1;
+
+const int veryfastDelay = 1;
+const int verySlowDelay = 16; // delay for very slow movement
+const int slowDelay = 6; // delay for slow movement
+const int fastDelay = 3; // delay for fast movement
+
+void setup() {
+    Serial.begin(9600);
+    servo1.attach(servoPin);
+    servo1.write(0); // start at 90 degrees
+}
+
+int timetable[9][5] = {
+  {},
+  {fastDelay,fastDelay,verySlowDelay,verySlowDelay,0}, //varied slow speed
+  {veryfastDelay,veryfastDelay,slowDelay,slowDelay,0}, // varied slow speed
+  {slowDelay,slowDelay,slowDelay,slowDelay,1600}, // constant slow speed with pause
+  {fastDelay,fastDelay,fastDelay,fastDelay,300}, // constant fast speed with pause
+  {verySlowDelay,slowDelay,fastDelay,verySlowDelay,1600}, // variaed slow speed with pauses
+  {slowDelay,fastDelay,veryfastDelay,slowDelay,300}, // variaed fast speed with pauses
+  {slowDelay,slowDelay,slowDelay,slowDelay,0}, // constant slow speed
+  {fastDelay,fastDelay,fastDelay,fastDelay,0} // constant fast speed
+};
+
+void runstate(int state) {
+  for (int pos = 0; pos <= 90; pos++) {
+      servo1.write(pos);
+      delay(timetable[state][0]);
+  }
+
+  for (int pos = 90; pos <= 180; pos++) {
+      servo1.write(pos);
+      delay(timetable[state][1]);
+  }
+
+  for (int pos = 180; pos >= 90; pos--) {
+      servo1.write(pos);
+      delay(timetable[state][2]);
+  }
+
+  for (int pos = 90; pos >= 0; pos--) {
+      servo1.write(pos);
+      delay(timetable[state][3]);
+  }
+
+  delay(timetable[state][4]);
+}
+
+void slowMoveTo90() {
+    int currentPosition = servo1.read(); // get current servo position
+
+    if (currentPosition < 90) {
+        for (int pos = currentPosition; pos <= 90; pos += 1) {
+            servo1.write(pos);
+            delay(6); // verySlowDelay is your defined delay for very slow movement
+        }
+    } else {
+        for (int pos = currentPosition; pos >= 90; pos -= 1) {
+            servo1.write(pos);
+            delay(6); // verySlowDelay is your defined delay for very slow movement
+        }
+    }
+}
+
+void loop() {
+
+    int state1, state2, state3, transition1, transition2, runtime1, runtime2, runtime3;
+
+    if (Serial.available() > 0) {
+        state1 = Serial.parseInt();
+        runtime1 = Serial.parseInt() * 1000; // convert runtime1 from milliseconds to senconds
+        transition1 = Serial.parseInt();
+        state2 = Serial.parseInt();
+        runtime2 = Serial.parseInt() * 1000; // convert runtime1 from milliseconds to senconds
+        transition2 = Serial.parseInt();
+        state3 = Serial.parseInt();
+        runtime3 = Serial.parseInt() * 1000; // convert runtime1 from milliseconds to senconds
+
+        // Print when state 1 starts
+        Serial.println("State 1 start");
+        unsigned long startTime = millis();
+        unsigned long timeLimit = runtime1; 
+
+        while ((millis() - startTime) < timeLimit) {
+          runstate(state1); 
+        }
+
+        // Print when state 1 is done
+        Serial.println("State 1 done");
+
+        int time[5];
+        int Count = 5; //how many time the motor moves
+        switch (transition1) {
+          case 1:
+            // Print when transition 1 starts
+            Serial.println("Transition 1, case 1 start"); // indication
+            for (int j=0;j<=Count;++j) {
+              for (int i=0;i<5;++i) {
+                time[i] = timetable[state1][i]+(timetable[state2][i]-timetable[state1][i])*j/Count;
+              }
+
+              for (int pos = 0; pos <= 90; pos++) {
+                  servo1.write(pos);
+                  delay(time[0]);
+              }
+
+              for (int pos = 90; pos <= 180; pos++) {
+                  servo1.write(pos);
+                  delay(time[1]);
+              }
+
+              for (int pos = 180; pos >= 90; pos--) {
+                  servo1.write(pos);
+                  delay(time[2]);
+              }
+
+              for (int pos = 90; pos >= 0; pos--) {
+                  servo1.write(pos);
+                  delay(time[3]);
+              }
+
+              delay(time[4]);
+            }
+            // Print when transition 1, case 1 starts
+            Serial.println("Transition 1, case 1 done");
+            break;
+
+          
+          case 2:
+              // Print when transition 1, case 2 starts
+              Serial.println("Transition 1, case 2 start");
+              break;
+              Serial.println("Transition 1, case 2 finished");
+              
+          
+          case 3:
+               // Print when transition 1, case 3 starts
+              Serial.println("Transition 1, case 3 start");
+              int cnt=0,rnd,time[5];
+              for (int i=0;i<4;++i) time[i] = random(timetable[7][i]/2,timetable[7][i]);
+              for (int j=0;j<=Count;++j) {
+                  rnd = random(20,200);
+                  for (int pos = 0; pos <= 90; pos++,cnt++) {
+                      if (cnt == rnd) {
+                          delay(random(200,800));
+                          cnt = 0;
+                          rnd = random(20,200);
+                      }
+                      servo1.write(pos);
+                      delay(time[0]);
+                  }
+
+                  for (int pos = 90; pos <= 180; pos++,cnt++) {
+                      if (cnt == rnd) {
+                          delay(random(200,800));
+                          cnt = 0;
+                          rnd = random(30,300);
+                      }
+                      servo1.write(pos);
+                      delay(time[1]);
+                  }
+
+                  for (int pos = 180; pos >= 90; pos--,cnt++) {
+                      if (cnt == rnd) {
+                          delay(random(200,800));
+                          cnt = 0;
+                          rnd = random(30,300);
+                      }
+                      servo1.write(pos);
+                      delay(time[2]);
+                  }
+
+                  for (int pos = 90; pos >= 0; pos--,cnt++) {
+                      if (cnt == rnd) {
+                          delay(random(200,800));
+                          cnt = 0;
+                          rnd = random(30,300);
+                      }
+                      servo1.write(pos);
+                      delay(time[3]);
+                  } 
+              }
+ 
+              Serial.println("Transition 1, case 3 done");
+              break;
+
+          default:
+            break;
+        }
+
+        // Print when state 2 starts
+        Serial.println("State 2 start");
+        startTime = millis();
+        timeLimit = runtime2;
+
+        while ((millis() - startTime) < timeLimit) {
+          runstate(state2); 
+        }
+        
+        // Print when state 2 is done
+        Serial.println("State 2 done");
+
+
+
+        switch (transition2) {
+          case 1:
+            // Print when transition 2, case 1 starts
+            Serial.println("Transition 2, case 1 start");
+            for (int j=0;j<=Count;++j) {
+              for (int i=0;i<5;++i) {
+                time[i] = timetable[state1][i]+(timetable[state2][i]-timetable[state1][i])*j/Count;
+              }
+              
+              for (int pos = 0; pos <= 90; pos++) {
+                  servo1.write(pos);
+                  delay(time[0]);
+              }
+
+              for (int pos = 90; pos <= 180; pos++) {
+                  servo1.write(pos);
+                  delay(time[1]);
+              }
+
+              for (int pos = 180; pos >= 90; pos--) {
+                  servo1.write(pos);
+                  delay(time[2]);
+              }
+
+              for (int pos = 90; pos >= 0; pos--) {
+                  servo1.write(pos);
+                  delay(time[3]);
+              }
+
+              delay(time[4]);
+            }
+            // Print when transition 2, case 1 is done
+            Serial.println("Transition 2 done");
+            break;
+
+          
+          case 2:
+              // Print when transition 2, case 2 starts
+              Serial.println("Transition 2, case 2 start");
+              break;
+              Serial.println("Transition 2, case 2 finished");
+
+          case 3:
+               // Print when transition 2, case 3 starts
+              Serial.println("Transition 2, case 3 start");
+              int cnt=0,rnd,time[5];
+              for (int i=0;i<4;++i) time[i] = random(timetable[7][i]/2,timetable[7][i]);
+              for (int j=0;j<=Count;++j) {
+                  rnd = random(20,200);
+                  for (int pos = 0; pos <= 90; pos++,cnt++) {
+                      if (cnt == rnd) {
+                          delay(random(200,800));
+                          cnt = 0;
+                          rnd = random(30,300);
+                      }
+                      servo1.write(pos);
+                      delay(time[0]);
+                  }
+
+                  for (int pos = 90; pos <= 180; pos++,cnt++) {
+                      if (cnt == rnd) {
+                          delay(random(200,800));
+                          cnt = 0;
+                          rnd = random(30,300);
+                      }
+                      servo1.write(pos);
+                      delay(time[1]);
+                  }
+
+                  for (int pos = 180; pos >= 90; pos--,cnt++) {
+                      if (cnt == rnd) {
+                          delay(random(200,800));
+                          cnt = 0;
+                          rnd = random(30,300);
+                      }
+                      servo1.write(pos);
+                      delay(time[2]);
+                  }
+
+                  for (int pos = 90; pos >= 0; pos--,cnt++) {
+                      if (cnt == rnd) {
+                          delay(random(200,800));
+                          cnt = 0;
+                          rnd = random(30,300);
+                      }
+                      servo1.write(pos);
+                      delay(time[3]);
+                  } 
+              }
+ // Print when transition 2 is done
+              Serial.println("Transition 2, case 3 done");
+              break;
+
+          default:
+            break;
+        }
+
+        // Print when state 3 starts
+        Serial.println("State 3 start");
+        startTime = millis();
+        timeLimit = runtime3;
+
+        while ((millis() - startTime) < timeLimit) {
+          runstate(state3); 
+        }
+        
+        // Print when state 3 is done
+        Serial.println("State 3 done");
+
+        // Here we stop the loop function by introducing an infinite empty loop.
+        // This ensures that the movement doesn't repeat.
+        // If you want the movement to repeat, simply remove this part.
+        slowMoveTo90();
+        while (Serial.available() <= 0) {
+          // Do nothing
+        } 
+    }
+}
